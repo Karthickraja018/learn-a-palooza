@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learn A Palooza — Draft Counter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #14161C;
+    --ink-2: #1D2028;
+    --paper: #F6F2E7;
+    --paper-shadow: #DCD5C2;
+    --stamp: #D94A2B;
+    --stamp-dark: #B23A20;
+    --ok: #3E8E5A;
+    --line: #C9C2AC;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--ink);
+    background-image:
+      radial-gradient(circle at 20% 10%, #1E2230 0%, transparent 45%),
+      radial-gradient(circle at 85% 90%, #1A1D26 0%, transparent 50%);
+    min-height:100vh;
+    font-family:'Manrope', sans-serif;
+    color: var(--paper);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 32px 16px;
+  }
+  .wrap{ width:100%; max-width:480px; }
+  .counter-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:18px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .counter-head .now-serving{
+    font-size:12px;
+    letter-spacing:0.04em;
+    color:#8A8FA3;
+  }
+  .counter-head .ticket-no{
+    font-size:15px;
+    color:#D6D2C4;
+  }
+  .ticket{
+    background: var(--paper);
+    color:#26241D;
+    border-radius: 6px;
+    position:relative;
+    padding: 36px 30px 30px;
+    box-shadow: 0 24px 60px -20px rgba(0,0,0,0.6), 0 2px 0 var(--paper-shadow);
+  }
+  .ticket::before, .ticket::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    width: 22px; height: 22px;
+    background: var(--ink);
+    border-radius: 50%;
+  }
+  .ticket::before{ top:-11px; }
+  .ticket::after{ bottom:-11px; }
+  .perf{
+    border-bottom: 2px dashed var(--line);
+    margin: 22px 0;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.06em;
+    color:#8A8471;
+    margin: 0 0 6px;
+  }
+  h1{
+    font-family:'Manrope', sans-serif;
+    font-weight:800;
+    font-size: 26px;
+    line-height:1.15;
+    margin: 0 0 10px;
+    color:#1B1A15;
+  }
+  .sub{
+    font-size:14px;
+    color:#5B5747;
+    margin:0;
+    line-height:1.5;
+  }
+  #draftArea{ min-height: 96px; }
+  .draft-text{
+    font-size: 17px;
+    line-height:1.55;
+    color:#211F19;
+    white-space:pre-wrap;
+    word-wrap:break-word;
+  }
+  .placeholder{
+    color:#9C9683;
+    font-size:14px;
+  }
+  .btn{
+    width:100%;
+    border:none;
+    border-radius: 5px;
+    padding: 15px 18px;
+    font-family:'Manrope', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    margin-top: 10px;
+    transition: transform 0.08s ease;
+  }
+  .btn:active{ transform: scale(0.98); }
+  .btn-primary{
+    background: var(--stamp);
+    color: var(--paper);
+  }
+  .btn-primary:hover{ background: var(--stamp-dark); }
+  .btn-secondary{
+    background: transparent;
+    color:#26241D;
+    border: 1.5px solid #26241D;
+  }
+  .btn-linkedin{
+    background:#1B1A15;
+    color: var(--paper);
+    display:none;
+  }
+  .row{ display:flex; gap:10px; }
+  .row .btn{ margin-top:0; }
+  .status{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color: var(--ok);
+    margin-top:10px;
+    min-height:16px;
+  }
+  .footer-link{
+    text-align:center;
+    margin-top:22px;
+  }
+  .footer-link button{
+    background:none; border:none; cursor:pointer;
+    color:#6B7080; font-size:12px; font-family:'IBM Plex Mono', monospace;
+    text-decoration:underline;
+  }
+  .panel{
+    display:none;
+    background: var(--ink-2);
+    border-radius: 6px;
+    padding:18px;
+    margin-top:16px;
+    border:1px solid #2B2F3A;
+  }
+  .panel.open{ display:block; }
+  .panel label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:#8A8FA3;
+    display:block;
+    margin-bottom:6px;
+  }
+  .panel textarea{
+    width:100%;
+    min-height:160px;
+    background:#0F1116;
+    color:#E8E6DD;
+    border:1px solid #2B2F3A;
+    border-radius:4px;
+    padding:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    resize:vertical;
+    margin-bottom:10px;
+  }
+  .panel .small-btn{
+    padding:9px 14px;
+    font-size:13px;
+    width:auto;
+  }
+  .panel-note{
+    font-size:11px;
+    color:#6B7080;
+    margin-top:8px;
+    line-height:1.5;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="counter-head">
+    <span class="now-serving">LEARN A PALOOZA</span>
+    <span class="ticket-no" id="ticketNoLabel">TICKET —</span>
+  </div>
+
+  <div class="ticket">
+    <p class="eyebrow">LEARN A PALOOZA — YOUR POST FOR TODAY</p>
+    <h1 id="heading">Tap below to get a draft</h1>
+    <p class="sub" id="subtext">Every draft goes out once before any repeats — you'll get whichever one comes up next in the queue.</p>
+
+    <div class="perf"></div>
+
+    <div id="draftArea">
+      <p class="placeholder" id="placeholderText">Your draft will appear here.</p>
+      <p class="draft-text" id="draftText" style="display:none;"></p>
+    </div>
+
+    <button class="btn btn-primary" id="getDraftBtn">Get my draft</button>
+
+    <div class="row" style="margin-top:10px; display:none;" id="actionRow">
+      <button class="btn btn-secondary" id="copyBtn" style="display:none;">Copy text</button>
+      <button class="btn btn-linkedin" id="linkedinBtn">Post on LinkedIn →</button>
+    </div>
+
+    <p class="status" id="statusMsg"></p>
+  </div>
+
+  <div class="footer-link">
+    <button id="toggleAdmin">organizer setup</button>
+  </div>
+
+  <div class="panel" id="adminPanel">
+    <label>Drafts — separate each one with a line containing just <code>---</code> (each attendee gets one, no repeats until all are used)</label>
+    <textarea id="draftsInput" placeholder="First draft, hashtags and mentions can span multiple lines...&#10;---&#10;Second draft here...&#10;---&#10;Third draft here..."></textarea>
+    <button class="btn btn-primary small-btn" id="saveDraftsBtn">Save drafts</button>
+    <button class="btn btn-secondary small-btn" id="resetQueueBtn" style="margin-left:8px;">Reset queue</button>
+    <p class="panel-note">Saving replaces the shared draft list for every attendee scanning this page. "Reset queue" clears the shuffle order and ticket count — use it before the event starts, not during. LinkedIn doesn't officially support pre-filling post text from a link, so this copies the draft to the clipboard automatically and attempts a best-effort LinkedIn deep link; if LinkedIn opens blank, attendees just paste.</p>
+  </div>
+
+</div>
+
+<script>
+const DRAFTS_KEY = 'ld-counter:drafts';
+const BAG_KEY = 'ld-counter:bag-state';
+
+let currentDraft = null;
+
+const DEFAULT_DRAFTS = [
+`Some events you attend, some you truly experience—and Learn-A-Palooza, Chennai was definitely one of those, with fun challenges, meaningful conversations and plenty of learning along the way.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Vinod Chandran, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`Who says learning has to mean sitting and taking notes? Learn-A-Palooza mixed things up with games, challenges, conversations and plenty of opportunities to learn from one another.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Vinod Chandran, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`There was a different kind of buzz at Learn-A-Palooza, Chennai—people playing, collaborating, experimenting and sharing ideas, all while learning along the way.
+@Hexaware Technologies, @Vinod Chandran, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`A day filled with engaging conversations, new challenges and shared ideas that's what made Learn-A-Palooza, Chennai a truly enriching experience.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`One thing Learn-A-Palooza got absolutely right—learning becomes more meaningful when you experience it. The activities, interactions and hands-on experiences made the day both engaging and memorable.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Vinod Chandran, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`From "Let's give it a try" to "That was actually fun!"—Learn-A-Palooza had plenty of moments that brought out everyone's curious side. A great day of learning beyond the usual.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`Games brought out the competitive spirit, activities sparked curiosity, and conversations offered fresh perspectives—Learn-A-Palooza brought together the right mix of engagement, collaboration and learning for a memorable experience.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`The best part was seeing everyone contribute and learn together, creating a space where ideas flowed, connections grew, and learning happened naturally.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`Childhood games, grown-up teams, new-age technology, and a whole lot of enthusiasm! Learn-A-Palooza, Chennai brought together some unexpected ingredients—and somehow made them work brilliantly.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Vinod Chandran, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`Learning got a makeover at Learn-A-Palooza! No routine sessions, no passive participation—just people getting involved, trying new things, sharing experiences, and having a great time.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Vinod Chandran, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`Learn-A-Palooza created an environment where curiosity and learning came together through engaging activities, new ideas, collaboration and opportunities to explore.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`When learning meets a vibrant carnival atmosphere, you get Learn-A-Palooza—our Chennai edition brought together active participation, fresh ideas, meaningful interactions and memorable learning experiences.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Vinod Chandran, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`We engaged, collaborated, exchanged ideas and explored new perspectives, making Learn-A-Palooza a meaningful and enriching learning experience.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`There's something special about learning when you're surrounded by people who are just as curious and enthusiastic as you are. Learn-A-Palooza, Chennai captured that spirit beautifully.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`,
+`And that's a wrap on an incredible day of learning, laughter, teamwork, and discovery! Learn-A-Palooza, Chennai definitely left us with memories—and a few new things to think about.
+#Sonic #HexaVarsity #LearnAPaloozaChennai #CarnivalOfKnowledge #LearningisFun
+@Hexaware Technologies, @Satyendu Mohanty, @Tanuja Pereira, @Laja Panicker, @Joy Brighty, @Saira Kuruvilla`
+];
+
+async function loadDrafts(){
+  try{
+    const r = await window.storage.get(DRAFTS_KEY, true);
+    if(r) return JSON.parse(r.value);
+  }catch(e){ /* fall through to seed */ }
+  // seed with default drafts on first run
+  await saveDrafts(DEFAULT_DRAFTS);
+  return DEFAULT_DRAFTS;
+}
+
+async function saveDrafts(list){
+  await window.storage.set(DRAFTS_KEY, JSON.stringify(list), true);
+}
+
+async function loadBagState(){
+  try{
+    const r = await window.storage.get(BAG_KEY, true);
+    return r ? JSON.parse(r.value) : null;
+  }catch(e){ return null; }
+}
+
+async function saveBagState(state){
+  await window.storage.set(BAG_KEY, JSON.stringify(state), true);
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Core no-repeat dispenser: shuffle-bag algorithm
+async function getNextDraft(){
+  const drafts = await loadDrafts();
+  if(!drafts.length) return null;
+
+  let state = await loadBagState();
+  const n = drafts.length;
+
+  // regenerate state if missing, exhausted, or draft list size changed
+  if(!state || !Array.isArray(state.bag) || state.bag.length !== n || state.pointer >= n){
+    let bag = shuffle([...Array(n).keys()]);
+    if(state && typeof state.lastGiven === 'number' && n > 1 && bag[0] === state.lastGiven){
+      const swapWith = 1 + Math.floor(Math.random() * (n - 1));
+      [bag[0], bag[swapWith]] = [bag[swapWith], bag[0]];
+    }
+    state = {
+      bag,
+      pointer: 0,
+      lastGiven: state ? state.lastGiven : null,
+      ticketCount: state ? (state.ticketCount || 0) : 0
+    };
+  }
+
+  const chosenIndex = state.bag[state.pointer];
+  state.pointer += 1;
+  state.lastGiven = chosenIndex;
+  state.ticketCount = (state.ticketCount || 0) + 1;
+
+  await saveBagState(state);
+  return { text: drafts[chosenIndex], ticket: state.ticketCount };
+}
+
+async function resetQueue(){
+  await window.storage.set(BAG_KEY, JSON.stringify({bag: [], pointer: 0, lastGiven: null, ticketCount: 0}), true);
+}
+
+function buildLinkedInUrl(text){
+  // Undocumented deep link — LinkedIn may change or ignore this at any time.
+  return 'https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(text);
+}
+
+async function copyToClipboard(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+const getDraftBtn = document.getElementById('getDraftBtn');
+const placeholderText = document.getElementById('placeholderText');
+const draftTextEl = document.getElementById('draftText');
+const heading = document.getElementById('heading');
+const subtext = document.getElementById('subtext');
+const actionRow = document.getElementById('actionRow');
+const copyBtn = document.getElementById('copyBtn');
+const linkedinBtn = document.getElementById('linkedinBtn');
+const statusMsg = document.getElementById('statusMsg');
+const ticketNoLabel = document.getElementById('ticketNoLabel');
+
+getDraftBtn.addEventListener('click', async () => {
+  getDraftBtn.disabled = true;
+  getDraftBtn.textContent = 'Fetching...';
+  statusMsg.textContent = '';
+
+  const result = await getNextDraft();
+
+  if(!result){
+    heading.textContent = 'No drafts loaded yet';
+    subtext.textContent = 'Ask the event organizer to add drafts via "organizer setup" below.';
+    getDraftBtn.disabled = false;
+    getDraftBtn.textContent = 'Get my draft';
+    return;
+  }
+
+  currentDraft = result.text;
+  placeholderText.style.display = 'none';
+  draftTextEl.style.display = 'block';
+  draftTextEl.textContent = result.text;
+  heading.textContent = 'Here\'s your draft';
+  subtext.textContent = 'Copied to your clipboard — tap below to open LinkedIn and paste it in.';
+  ticketNoLabel.textContent = 'TICKET #' + String(result.ticket).padStart(3, '0');
+
+  await copyToClipboard(result.text);
+
+  actionRow.style.display = 'flex';
+  copyBtn.style.display = 'block';
+  linkedinBtn.style.display = 'block';
+
+  getDraftBtn.textContent = 'Get another draft';
+  getDraftBtn.disabled = false;
+});
+
+copyBtn.addEventListener('click', async () => {
+  if(!currentDraft) return;
+  const ok = await copyToClipboard(currentDraft);
+  statusMsg.textContent = ok ? 'Copied ✓' : 'Could not copy — select the text manually.';
+});
+
+linkedinBtn.addEventListener('click', async () => {
+  if(!currentDraft) return;
+  await copyToClipboard(currentDraft);
+  window.open(buildLinkedInUrl(currentDraft), '_blank', 'noopener');
+  statusMsg.textContent = 'Opening LinkedIn — if it opens blank, just paste (it\'s on your clipboard).';
+});
+
+// Organizer panel
+const toggleAdmin = document.getElementById('toggleAdmin');
+const adminPanel = document.getElementById('adminPanel');
+const draftsInput = document.getElementById('draftsInput');
+const saveDraftsBtn = document.getElementById('saveDraftsBtn');
+const resetQueueBtn = document.getElementById('resetQueueBtn');
+
+toggleAdmin.addEventListener('click', async () => {
+  adminPanel.classList.toggle('open');
+  if(adminPanel.classList.contains('open')){
+    const drafts = await loadDrafts();
+    draftsInput.value = drafts.join('\n---\n');
+  }
+});
+
+saveDraftsBtn.addEventListener('click', async () => {
+  const drafts = draftsInput.value
+    .split(/\n\s*---\s*\n/)
+    .map(d => d.trim())
+    .filter(Boolean);
+  await saveDrafts(drafts);
+  await resetQueue();
+  statusMsg.textContent = '';
+  alert('Saved ' + drafts.length + ' draft(s) and reset the queue.');
+});
+
+resetQueueBtn.addEventListener('click', async () => {
+  await resetQueue();
+  alert('Queue reset — next tap starts a fresh shuffle.');
+});
+</script>
+</body>
+</html>
